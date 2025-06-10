@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LLaMA File Chat</title>
+</head>
+<body>
+    <h2>Upload a file and chat with it</h2>
+    
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload</button>
+
+    <div id="status"></div>
+
+    <br>
+    <input type="text" id="question" placeholder="Ask something...">
+    <button onclick="askQuestion()">Ask</button>
+
+    <div id="answer" style="margin-top: 20px; font-weight: bold;"></div>
+
+    <script>
+        let fileText = "";
+
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                fileText = data.text;
+                document.getElementById("status").innerText = "✅ File uploaded & processed!";
+            });
+        }
+
+        function askQuestion() {
+            const question = document.getElementById("question").value;
+            fetch("/ask", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ context: fileText, question: question })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("answer").innerText = "LLaMA: " + data.answer;
+            });
+        }
+    </script>
+</body>
+</html>

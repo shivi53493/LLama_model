@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat with LLaMA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    textarea, pre {
+      width: 100%;
+      min-height: 100px;
+      margin-top: 1rem;
+      font-family: monospace;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #f9f9f9;
+      white-space: pre-wrap;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.7rem 1.5rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: green;
+    }
+    #error {
+      color: red;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>💬 Chat with Your LLaMA Model</h1>
+
+  <!-- File Upload Section -->
+  <input type="file" id="fileInput" accept=".pdf,.txt,.docx,.png,.jpg,.jpeg" />
+  <button onclick="upload()">📁 Upload & Extract</button>
+  <p id="status">No file uploaded yet.</p>
+  <p id="error"></p>
+
+  <!-- Extracted Text Display -->
+  <div>
+    <p><strong>🧾 Extracted Text:</strong></p>
+    <pre id="extractedText">Nothing yet.</pre>
+  </div>
+
+  <!-- Question Section -->
+  <div>
+    <p><strong>❓ Ask a Question:</strong></p>
+    <input type="text" id="questionInput" placeholder="Type your question here..." style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
+    <button onclick="ask()">💡 Ask</button>
+  </div>
+
+  <!-- Answer Display -->
+  <div>
+    <p><strong>🤖 AI Answer:</strong></p>
+    <textarea id="answerOutput" readonly placeholder="Answer will appear here..."></textarea>
+  </div>
+</div>
+
+<script>
+  let contextText = "";
+
+  function upload() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) {
+      alert("Please select a file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    document.getElementById("status").innerText = "⏳ Uploading and extracting text...";
+    document.getElementById("error").innerText = "";
+    document.getElementById("extractedText").innerText = "";
+
+    fetch("/upload/", {
+      method: "POST",
+      body: formData,
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.text) {
+        contextText = data.text;
+        document.getElementById("status").innerText = "✅ File uploaded and text extracted.";
+        document.getElementById("extractedText").innerText = contextText;
+      } else if (data.error) {
+        document.getElementById("status").innerText = "❌ Upload failed.";
+        document.getElementById("error").innerText = data.error;
+        contextText = "";
+      }
+    })
+    .catch((err) => {
+      document.getElementById("status").innerText = "❌ Upload failed.";
+      document.getElementById("error").innerText = "Error: " + err.message;
+      contextText = "";
+      console.error("Upload error:", err);
+    });
+  }
+
+  function ask() {
+    const question = document.getElementById("questionInput").value;
+    if (!question.trim()) {
+      alert("Please type a question.");
+      return;
+    }
+
+    document.getElementById("answerOutput").value = "⏳ Thinking...";
+    document.getElementById("error").innerText = "";
+
+    fetch("/chat/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question: question.trim(),
+        context: contextText.trim()
+      }),
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.answer) {
+        document.getElementById("answerOutput").value = data.answer;
+      } else if (data.error) {
+        document.getElementById("answerOutput").value = "❌ Error: " + data.error;
+      } else {
+        document.getElementById("answerOutput").value = "❌ No valid response.";
+      }
+    })
+    .catch((err) => {
+      document.getElementById("answerOutput").value = "❌ Error: " + err.message;
+      document.getElementById("error").innerText = "Error: " + err.message;
+      console.error("Ask error:", err);
+    });
+  }
+</script>
+</body>
+</html>
