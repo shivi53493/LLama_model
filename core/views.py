@@ -71,3 +71,8 @@ def ask_question(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({"error": f"Internal Server Error: {str(e)}"}, status=500)
+
+
+def test_view(request):
+
+    return render(request,'test.html')

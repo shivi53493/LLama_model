@@ -5,9 +5,9 @@ import pytesseract
 import docx
 from pdf2image import convert_from_path  # <-- NEW
 import pdfplumber
-
+import shutil
 # Update tesseract path if needed (Windows users)
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+tesseract_executable_path = shutil.which("tesseract")
 
 def extract_text(file_path):
     ext = file_path.lower()

@@ -1,0 +1,129 @@
+
+run the command in terminal
+
+gsutil cp gs://spls/gsp517/prompt.ipynb .
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+Modify prompt.ipynb
+
+1) modify project_id and region in cell 3
+2)  paste following in cell 5
+
+%%bash
+ 
+# Task 1.4
+# Use cURL to test a prompt with the API, by modifying prompt with the prompt from the lab guide.
+ 
+MODEL_ID="gemini-pro"
+ 
+curl -X POST \
+-H "Authorization: Bearer $(gcloud auth print-access-token)" \
+-H "Content-Type: application/json" \
+https://${API_ENDPOINT}/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL_ID}:streamGenerateContent \
+-d '{
+"contents": {
+"role": "USER",
+"parts": { "text": "I am a Chef. I need to create Japanese recipes for customers who want low sodium meals. However, I do not want to include recipes that use ingredients associated with a peanuts food allergy. I have ahi tuna, fresh ginger, and edamame in my kitchen and other ingredients. The customer wine preference is red. Please provide some for meal recommendations. For each recommendation include preparation instructions, time to prepare and the recipe title at the begining of the response. Then include the wine paring for each recommendation. At the end of the recommendation provide the calories associated with the meal and the nutritional facts." }
+}
+}'
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+run commands in cloudshell
+
+git clone https://github.com/GoogleCloudPlatform/generative-ai.git
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+cd generative-ai/gemini/sample-apps/gemini-streamlit-cloudrun
+gsutil cp gs://spls/gsp517/chef.py .
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+open chef.py file and paste the code form the file provided on this link
+
+# Around line 104
+wine = st.radio(
+"What is your customer's wine preference?",
+["Red", "White", "None"],
+index=None,
+)
+# End of Task 4.
+
+save the file 
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+prompt = f"""I am a Chef.  I need to create {cuisine} \n
+recipes for customers who want {dietary_preference} meals. \n
+However, don't include recipes that use ingredients with the customer's {allergy} allergy. \n
+I have {ingredient_1}, \n
+{ingredient_2}, \n
+and {ingredient_3} \n
+in my kitchen and other ingredients. \n
+The customer's wine preference is {wine} \n
+Please provide some for meal recommendations.
+For each recommendation include preparation instructions,
+time to prepare
+and the recipe title at the begining of the response.
+Then include the wine paring for each recommendation.
+At the end of the recommendation provide the calories associated with the meal
+and the nutritional facts.
+"""
+
+save the file
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+export PROJECT_ID=$(gcloud config get-value project)
+gcloud storage cp chef.py gs://$PROJECT_ID-generative-ai/
+
+
+
+cd generative-ai/gemini/sample-apps/gemini-streamlit-cloudrun
+
+
+python3 -m venv gemini-streamlit
+source gemini-streamlit/bin/activate
+pip install -r requirements.txt
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+PROJECT='qwiklabs-gcp-03-715f0dacd315'
+REGION='us-central1'
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+streamlit run chef.py \
+--browser.serverAddress=localhost \
+--server.enableCORS=false \
+--server.enableXsrfProtection=false \
+--server.port 8080
+
+
+visit site
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Modify docker file  
+On or around line 10, modify the code so that it uses chef.py, instead of app.py. The result should look like:
+ 
+ENTRYPOINT ["streamlit", "run", "chef.py", "--server.port=8080", "--server.address=0.0.0.0"]
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+AR_REPO='chef-repo'
+SERVICE_NAME='chef-streamlit-app'
+gcloud artifacts repositories create "$AR_REPO" --location="$REGION" --repository-format=Docker
+gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT/$AR_REPO/$SERVICE_NAME"
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+gcloud run deploy "$SERVICE_NAME" \
+--port=8080 \
+--image="$REGION-docker.pkg.dev/$PROJECT/$AR_REPO/$SERVICE_NAME" \
+--allow-unauthenticated \
+--region=$REGION \
+--platform=managed  \
+--project=$PROJECT \
+--set-env-vars=PROJECT=$PROJECT,REGION=$REGION
+
