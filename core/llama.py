@@ -1,11 +1,12 @@
 # core/llama.py
 
 import requests
-
-def ask_llama(context, question):
+import json
+from markdown2 import markdown
+from django.http import JsonResponse
+def stream_llama_response(context, question):
     url = "http://localhost:11434/api/generate"
 
-    # Build the prompt based on whether context exists
     if context.strip():
         prompt = f"""Use the document below to answer the user's question.
 
@@ -22,23 +23,32 @@ Answer:"""
 
     try:
         response = requests.post(url, json={
-            "model": "llama2",     # ✅ ensure this matches your model
+            # "model": "llama2",
+            "model": "gemma3:1b-it-qat",
             "prompt": prompt,
-            "stream": False
-        })
+            "stream": True
+        }, stream=True)
 
         if response.status_code != 200:
-            print(f"[LLAMA ERROR] Status {response.status_code}: {response.text}")
-            return "⚠️ AI model failed to respond properly."
+            yield f"data: ⚠️ AI model error: {response.status_code}\n\n"
+            return
+        
 
-        data = response.json()
-
-        return data.get("response", "").strip() or "⚠️ No answer generated."
+        for line in response.iter_lines():
+            if line:
+                try:
+                    data = json.loads(line.decode("utf-8"))
+                    token = data.get("response", "")
+                    
+                    if token:
+                        yield f"data: {token}\n\n"
+                except Exception:
+                    yield "data: ⚠️ Chunk parsing error\n\n"
+       
+        
 
     except requests.exceptions.ConnectionError:
-        print("[LLAMA ERROR] Cannot connect to Ollama server at http://localhost:11434")
-        return "⚠️ Ollama server is not running. Please start it using `ollama serve` or `ollama run llama2`."
+        yield "data: ⚠️ Cannot connect to Ollama server.\n\n"
 
     except Exception as e:
-        print(f"[LLAMA ERROR] Unexpected: {str(e)}")
-        return "⚠️ An unexpected error occurred while querying the AI model."
+        yield f"data: ⚠️ Unexpected error: {str(e)}\n\n"

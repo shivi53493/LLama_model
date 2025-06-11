@@ -1,0 +1,75 @@
+3.1 User Input Fields
+Login Page
+
+Email or Username
+
+Password
+
+Submit Button
+
+2FA Page
+
+OTP (6-digit)
+
+Submit Button
+
+Resend OTP Button
+
+3.2 Authentication Flow
+User submits login form with email/username and password.
+
+Server verifies credentials:
+
+If valid, generate OTP (6-digit code).
+
+Send OTP to user's email or phone (based on configuration).
+
+Show 2FA screen to user.
+
+User enters OTP:
+
+If correct: grant access and redirect to dashboard.
+
+If incorrect: show error message and retry option (up to N times).
+
+Session is created (JWT / Secure Cookie).
+
+Optionally remember the device for future logins (skip 2FA).
+
+3.3 OTP Management
+OTP should be:
+
+6 digits
+
+Random and time-bound (e.g., valid for 5 minutes)
+
+Limit OTP resend to every 30–60 seconds.
+
+Store OTP temporarily in secure storage (DB or cache).
+
+OTP should expire after time window or N failed attempts.
+
+3.4 Error Handling
+Incorrect password or username
+
+OTP expired
+
+Invalid OTP
+
+Resend limit exceeded
+
+Account locked due to failed attempts
+
+3.5 Security Features
+Account lockout after N failed login or OTP attempts
+
+Rate limiting login and OTP endpoints
+
+CAPTCHA (optional after multiple failures)
+
+Encrypt stored credentials (hashed + salted passwords)
+
+Use HTTPS for all network communication
+
+Logs for login attempts (with IP, timestamp)
+

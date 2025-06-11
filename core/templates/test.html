@@ -1,92 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chetu AI Chat bot</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
-            background-color: #e0f2f7; /* Light sky blue for the page background */
+            background-color: #e0f2f7;
+            /* Light sky blue for the page background */
             display: flex;
             flex-direction: column;
-            height: 100vh; /* Full viewport height */
+            height: 100vh;
+            /* Full viewport height */
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .chat-container {
             display: flex;
-            flex-grow: 1; /* Takes remaining vertical space */
-            overflow: hidden; 
+            flex-grow: 1;
+            /* Takes remaining vertical space */
+            overflow: hidden;
         }
 
         .main-content {
-            flex-grow: 1; /* Takes remaining horizontal space */
+            flex-grow: 1;
+            /* Takes remaining horizontal space */
             display: flex;
             flex-direction: column;
-            background-color: #f0f8ff; /* AliceBlue - very light blue for chat area */
+            background-color: #f0f8ff;
+            /* AliceBlue - very light blue for chat area */
         }
 
         .chat-messages {
             flex-grow: 1;
-            overflow-y: auto; /* Enable scrolling for messages */
+            overflow-y: auto;
+            /* Enable scrolling for messages */
             display: flex;
             flex-direction: column;
         }
 
         #statusMessages {
-            padding: 0.5rem 1.5rem; 
-            font-size: 0.85rem; /* Slightly smaller for status */
-            border-bottom: 1px solid #cce7ff; /* Separator line */
+            padding: 0.5rem 1.5rem;
+            font-size: 0.85rem;
+            /* Slightly smaller for status */
+            border-bottom: 1px solid #cce7ff;
+            /* Separator line */
         }
+
         #statusMessages #error {
-            color: #dc3545; /* Bootstrap danger color */
-            margin-bottom: 0;
-        }
-        #statusMessages #status {
-            color: #0d6efd; /* Bootstrap primary color */
+            color: #dc3545;
+            /* Bootstrap danger color */
             margin-bottom: 0;
         }
 
+        #statusMessages #status {
+            color: #0d6efd;
+            /* Bootstrap primary color */
+            margin-bottom: 0;
+        }
+
+        #statusMessages #uploadedFileDisplay {
+            padding-bottom: 0.5rem;
+            /* Add some padding below the file display */
+            border-bottom: 1px solid #cce7ff;
+            /* Consistent separator */
+            margin-bottom: 0.5rem;
+            /* Space between file display and extracted text */
+        }
+
+        #statusMessages #uploadedFileDisplay:empty {
+            border-bottom: none;
+            /* Remove border if no file is displayed */
+        }
+
+
         #extractedTextContainer {
             margin-bottom: 1rem;
-            padding: 1rem 1.5rem; 
-            border-bottom: 1px solid #cce7ff; /* Separator line */
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #cce7ff;
+            /* Separator line */
         }
+
         #extractedTextContainer h5 {
             font-size: 1.1rem;
             color: #333;
             margin-bottom: 0.5rem;
         }
+
         #extractedTextOutput {
-            background-color: #e9ecef; /* Light grey background */
+            background-color: #e9ecef;
+            /* Light grey background */
             padding: 0.75rem 1rem;
             border-radius: 0.25rem;
-            max-height: 150px; /* Adjusted max-height */
+            max-height: 150px;
+            /* Adjusted max-height */
             overflow-y: auto;
-            white-space: pre-wrap; /* Preserve line breaks */
+            white-space: pre-wrap;
+            /* Preserve line breaks */
             font-family: monospace;
-            font-size: 0.85rem; /* Slightly smaller font for pre */
+            font-size: 0.85rem;
+            /* Slightly smaller font for pre */
             border: 1px solid #ced4da;
         }
 
         #conversationArea {
             flex-grow: 1;
-            padding: 1rem 1.5rem; /* Default padding */
+            padding: 1rem 1.5rem;
+            /* Default padding */
             overflow-y: auto;
         }
-        
+
         .chat-input-area {
             display: flex;
             padding: 1rem 1.5rem;
-            background-color: #ffffff; /* White background for input bar */
-            border-top: 1px solid #cce7ff; /* Light blue border */
+            background-color: #ffffff;
+            /* White background for input bar */
+            border-top: 1px solid #cce7ff;
+            /* Light blue border */
             align-items: center;
-            gap: 0.75rem; /* Space between input and button */
+            gap: 0.75rem;
+            /* Space between input and button */
         }
 
         /* Responsive adjustments for smaller screens */
@@ -94,35 +134,44 @@
             #conversationArea {
                 padding: 0.75rem 1rem;
             }
+
             .chat-input-area {
                 padding: 0.75rem 1rem;
                 gap: 0.5rem;
             }
+
             .custom-input-group .btn-file-upload-prefix {
                 padding: 0.5rem 0.75rem;
                 font-size: 1.25rem;
             }
+
             .custom-input-group .form-control {
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
             }
+
             .chat-input-area .btn-send {
                 width: 40px;
                 height: 40px;
             }
+
             .chat-input-area .btn-send i {
                 font-size: 1rem;
             }
+
             #statusMessages {
                 padding: 0.5rem 1rem;
             }
+
             #extractedTextContainer {
-                 padding: 0.75rem 1rem;
+                padding: 0.75rem 1rem;
             }
+
             #extractedTextContainer h5 {
                 font-size: 1rem;
             }
-             #extractedTextOutput {
+
+            #extractedTextOutput {
                 font-size: 0.8rem;
             }
         }
@@ -131,66 +180,88 @@
             display: flex;
             flex-grow: 1;
             border-radius: 25px;
-            border: 1px solid #add8e6; /* Light blue border for the group */
-            background-color: #fff; /* White background for the group */
-            overflow: hidden; /* Ensures children conform to border-radius */
+            border: 1px solid #add8e6;
+            /* Light blue border for the group */
+            background-color: #fff;
+            /* White background for the group */
+            overflow: hidden;
+            /* Ensures children conform to border-radius */
         }
 
-        .custom-input-group:focus-within { /* Style when any child (like input) is focused */
-            border-color: #87ceeb; /* Sky blue border on focus */
+        .custom-input-group:focus-within {
+            /* Style when any child (like input) is focused */
+            border-color: #87ceeb;
+            /* Sky blue border on focus */
             box-shadow: 0 0 0 0.25rem rgba(135, 206, 235, 0.3);
         }
 
         .custom-input-group .btn-file-upload-prefix {
             background-color: transparent;
             border: none;
-            border-right: 1px solid #e0e0e0; /* Subtle separator */
-            color: #0056b3; /* Darker blue for the plus icon */
+            border-right: 1px solid #e0e0e0;
+            /* Subtle separator */
+            color: #0056b3;
+            /* Darker blue for the plus icon */
             padding: 0.75rem 1rem;
-            font-size: 1.5rem; /* Icon size */
+            font-size: 1.5rem;
+            /* Icon size */
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 0; /* Handled by parent group */
+            border-radius: 0;
+            /* Handled by parent group */
         }
+
         .custom-input-group .btn-file-upload-prefix:hover {
             background-color: rgba(0, 0, 0, 0.05);
             color: #003d80;
         }
+
         .custom-input-group .btn-file-upload-prefix:focus {
-            box-shadow: none; /* Remove default button focus glow */
+            box-shadow: none;
+            /* Remove default button focus glow */
         }
 
         .custom-input-group .form-control {
             flex-grow: 1;
-            border: none; /* Border is on the parent group */
-            border-radius: 0; /* Parent group handles rounding */
+            border: none;
+            /* Border is on the parent group */
+            border-radius: 0;
+            /* Parent group handles rounding */
             padding: 0.75rem 1.25rem;
             font-size: 1rem;
-            box-shadow: none; /* Remove default Bootstrap focus shadow on input itself */
-            background-color: transparent; /* Ensure it doesn't obscure parent background */
+            box-shadow: none;
+            /* Remove default Bootstrap focus shadow on input itself */
+            background-color: transparent;
+            /* Ensure it doesn't obscure parent background */
         }
 
         .chat-input-area .btn-send {
-            background-color: #007bff; /* Standard Bootstrap primary blue */
+            background-color: #007bff;
+            /* Standard Bootstrap primary blue */
             border-color: #007bff;
             color: white;
-            border-radius: 50%; /* Circular button */
-            width: 48px;   /* Slightly larger button */
+            border-radius: 50%;
+            /* Circular button */
+            width: 48px;
+            /* Slightly larger button */
             height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Prevent button from shrinking */
+            flex-shrink: 0;
+            /* Prevent button from shrinking */
         }
 
         .chat-input-area .btn-send:hover {
-            background-color: #0056b3; /* Darker blue on hover */
+            background-color: #0056b3;
+            /* Darker blue on hover */
             border-color: #0056b3;
         }
 
         .chat-input-area .btn-send i {
-            font-size: 1.25rem; /* Larger send icon */
+            font-size: 1.25rem;
+            /* Larger send icon */
         }
 
         /* Hidden file input, controlled by the plus button */
@@ -201,57 +272,197 @@
         /* Styles for chat bubbles */
         .message-bubble {
             padding: 0.75rem 1rem;
+            /* Slightly more horizontal padding for better look */
             border-radius: 15px;
             margin-bottom: 0.75rem;
-            max-width: 75%;
+            max-width: 60%;
             word-wrap: break-word;
-            line-height: 1.4;
+            line-height: 1.6;
+            /* Improved readability */
         }
 
         .user-message {
-            background-color: #007bff; /* Bootstrap primary blue */
+            background-color: #007bff;
+            /* Bootstrap primary blue */
             color: white;
             margin-left: auto;
             border-bottom-right-radius: 5px;
+            max-width: 50%
         }
 
         .ai-message {
-            background-color: #e9ecef; /* Light grey */
+            background-color: #e9ecef;
+            /* Light grey */
             color: #333;
             margin-right: auto;
             border-bottom-left-radius: 5px;
+            /* This is already good for preserving text newlines */
+            white-space: pre-wrap;
         }
+
         .ai-message.thinking {
             font-style: italic;
-            color: #6c757d; /* Bootstrap muted color */
+            color: #6c757d;
+            /* Bootstrap muted color */
         }
+
         .ai-message.error-message {
-            background-color: #f8d7da; /* Bootstrap danger light background */
-            color: #721c24; /* Bootstrap danger dark text */
-            border: 1px solid #f5c6cb; /* Bootstrap danger border */
+            background-color: #f8d7da;
+            /* Bootstrap danger light background */
+            color: #721c24;
+            /* Bootstrap danger dark text */
+            border: 1px solid #f5c6cb;
+            /* Bootstrap danger border */
         }
-        .initial-chat-placeholder {
-            text-align: center;
-            color: #6c757d; /* Bootstrap muted color */
-            margin-top: 2rem;
+
+        /* Ensure markdown generated elements within AI messages are styled */
+        .ai-message p {
+            margin-bottom: 0.5em;
+            /* Spacing between paragraphs */
+            white-space: pre-wrap;
+            /* Critical for preserving line breaks within paragraphs */
+        }
+
+        .ai-message strong,
+        .ai-message b {
+            font-weight: bold;
+        }
+
+        .ai-message em,
+        .ai-message i {
+            font-style: italic;
+        }
+
+        .ai-message a {
+            color: #007bff;
+            /* Link color */
+            text-decoration: underline;
+        }
+
+        .ai-message ul,
+        .ai-message ol {
+            margin-left: 1.5rem;
+            /* Indent lists */
+            padding-left: 0;
+            margin-bottom: 0.5em;
+        }
+
+        .ai-message li {
+            margin-bottom: 0.25em;
+            /* Spacing between list items */
+        }
+
+        .ai-message h1,
+        .ai-message h2,
+        .ai-message h3,
+        .ai-message h4,
+        .ai-message h5,
+        .ai-message h6 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .ai-message h1 {
+            font-size: 1.8em;
+        }
+
+        .ai-message h2 {
+            font-size: 1.5em;
+        }
+
+        .ai-message h3 {
+            font-size: 1.3em;
+        }
+
+        .ai-message h4 {
+            font-size: 1.1em;
+        }
+
+        .ai-message h5 {
+            font-size: 1em;
+        }
+
+        .ai-message h6 {
+            font-size: 0.9em;
+        }
+
+        .ai-message blockquote {
+            border-left: 4px solid #ced4da;
+            padding-left: 1em;
+            margin-left: 0;
+            font-style: italic;
+            color: #6c757d;
+        }
+
+        .ai-message table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+
+        .ai-message th,
+        .ai-message td {
+            border: 1px solid #dee2e6;
+            padding: 0.5em;
+            text-align: left;
+        }
+
+        .ai-message th {
+            background-color: #e9ecef;
+        }
+
+        /* Existing code and pre styles */
+        .ai-message code {
+            background: #f4f4f4;
+            border-radius: 4px;
+            font-family: monospace;
+            padding: 0.2em 0.4em;
+            /* Added padding for inline code */
+        }
+
+        .ai-message pre {
+            background: #f4f4f4;
+            border-radius: 4px;
+            overflow-x: auto;
+            padding: 0.75rem 1rem;
+            /* Adjusted padding for code blocks */
+        }
+
+        .ai-message pre,
+        .ai-message code {
+            white-space: pre-wrap;
+            /* Already there, but good to double-check */
+            word-break: break-all;
+            /* Ensures long lines break instead of overflowing */
+            overflow-x: auto;
         }
     </style>
 </head>
+
 <body>
 
-    <div class="chat-container p-sm-3 p-1"> 
-        <div class="main-content"> 
+    <div class="chat-container p-sm-3 p-1">
+        <div class="main-content">
             <div class="chat-messages">
                 <div id="statusMessages">
                     <p id="status">No file uploaded yet.</p>
                     <p id="error" class="mb-0"></p>
+                    <div id="uploadedFileDisplay"
+                        style="display: none; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                        <span id="uploadedFileName" class="text-primary fw-bold"></span>
+                        <button class="btn btn-sm btn-outline-secondary p-0" id="clearFileButton" title="Remove file"
+                            style="width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-x-lg" style="font-size: 0.75rem;"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="extractedTextContainer" style="display: none;">
                     <h5>🧾 Extracted Text:</h5>
                     <pre id="extractedTextOutput">Nothing yet.</pre>
                 </div>
                 <div id="conversationArea">
-                    <!-- Chat messages will be appended here -->
                     <p class="initial-chat-placeholder">Upload a file or ask a question to start the conversation.</p>
                 </div>
             </div>
@@ -260,7 +471,7 @@
                     <button class="btn btn-file-upload-prefix" id="uploadButton" title="Choose files">
                         <i class="bi bi-plus-lg"></i>
                     </button>
-                    <input type="file" id="fileUploadInput" accept=".pdf,.txt,.docx,.png,.jpg,.jpeg"> 
+                    <input type="file" id="fileUploadInput" accept=".pdf,.txt,.docx,.png,.jpg,.jpeg">
                     <input type="text" class="form-control" id="questionInput" placeholder="Ask your question...">
                 </div>
                 <button class="btn btn-send" id="sendButton" title="Send message">
@@ -270,8 +481,9 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
     <script>
         let contextText = ""; // To store extracted text from file
         const statusEl = document.getElementById('status');
@@ -282,34 +494,50 @@
         const questionInputEl = document.getElementById('questionInput');
         const initialPlaceholderEl = document.querySelector('.initial-chat-placeholder');
 
+        // New elements for file removal feature
+        const uploadedFileDisplayEl = document.getElementById('uploadedFileDisplay');
+        const uploadedFileNameEl = document.getElementById('uploadedFileName');
+        const clearFileButtonEl = document.getElementById('clearFileButton');
+
+
+        // --- MARKED.JS CONFIGURATION ---
+        // This is the crucial part for line breaks in poems
+        marked.setOptions({
+            breaks: true, // Interpret GFM line breaks (single newlines as <br>)
+            gfm: true    // Enable GitHub Flavored Markdown (necessary for `breaks` to work)
+        });
+        // --- END MARKED.JS CONFIGURATION ---
+
+
         // Helper to remove initial placeholder
         function hideInitialPlaceholder() {
             if (initialPlaceholderEl && initialPlaceholderEl.parentNode) {
                 initialPlaceholderEl.style.display = 'none';
             }
         }
-        
+
         // Helper to show initial placeholder if conversation is empty
         function showInitialPlaceholderIfEmpty() {
+            // Check if only the initial placeholder exists and is currently hidden
             if (initialPlaceholderEl && conversationAreaEl.children.length === 1 && conversationAreaEl.firstChild === initialPlaceholderEl) {
-                 initialPlaceholderEl.style.display = 'block';
+                initialPlaceholderEl.style.display = 'block';
             }
         }
 
         // JavaScript to make the plus icon trigger the hidden file input
-        document.getElementById('uploadButton').addEventListener('click', function() {
+        document.getElementById('uploadButton').addEventListener('click', function () {
             document.getElementById('fileUploadInput').click();
         });
 
         // Handle file selection and upload
-        document.getElementById('fileUploadInput').addEventListener('change', function(event) {
+        document.getElementById('fileUploadInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) {
                 return;
             }
             uploadFile(file);
             // Clear the file input so the same file can be re-uploaded if needed
-            event.target.value = null; 
+            event.target.value = null;
         });
 
         function uploadFile(file) {
@@ -322,40 +550,58 @@
             extractedTextContainerEl.style.display = 'block';
             hideInitialPlaceholder();
 
+            // Hide previous file display if any
+            uploadedFileDisplayEl.style.display = 'none';
+            uploadedFileNameEl.textContent = '';
+
+
             fetch("/upload/", { // Make sure this endpoint exists on your server
                 method: "POST",
                 body: formData,
             })
-            .then(async (res) => {
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({ error: `Server error: ${res.status}` }));
-                    throw new Error(errData.error || `Server error: ${res.status}`);
-                }
-                return res.json();
-            })
-            .then((data) => {
-                if (data.text) {
-                    contextText = data.text;
-                    statusEl.innerText = `✅ File uploaded and text extracted: ${file.name}`;
-                    extractedTextOutputEl.innerText = contextText;
-                } else if (data.error) {
+                .then(async (res) => {
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({ error: `Server error: ${res.status}` }));
+                        throw new Error(errData.error || `Server error: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    if (data.text) {
+                        contextText = data.text;
+                        statusEl.innerText = `✅ File uploaded and text extracted.`; // Shorter status
+                        errorEl.innerText = ""; // Clear any previous error
+                        extractedTextOutputEl.innerText = contextText;
+
+                        // Show and set file name
+                        uploadedFileNameEl.textContent = file.name;
+                        uploadedFileDisplayEl.style.display = 'flex'; // Use flex to align items
+
+                    } else if (data.error) {
+                        statusEl.innerText = "❌ Upload failed.";
+                        errorEl.innerText = data.error;
+                        extractedTextOutputEl.innerText = "Could not extract text.";
+                        contextText = ""; // Reset context on error
+                        uploadedFileDisplayEl.style.display = 'none'; // Hide file display on error
+                        uploadedFileNameEl.textContent = '';
+                    } else {
+                        statusEl.innerText = "❌ Upload processed, but no text found.";
+                        errorEl.innerText = ""; // Clear any previous error
+                        extractedTextOutputEl.innerText = "No text content found in the file.";
+                        contextText = "";
+                        uploadedFileDisplayEl.style.display = 'none'; // Hide file display if no text
+                        uploadedFileNameEl.textContent = '';
+                    }
+                })
+                .catch((err) => {
                     statusEl.innerText = "❌ Upload failed.";
-                    errorEl.innerText = data.error;
-                    extractedTextOutputEl.innerText = "Could not extract text.";
-                    contextText = ""; // Reset context on error
-                } else {
-                    statusEl.innerText = "❌ Upload processed, but no text found.";
-                    extractedTextOutputEl.innerText = "No text content found in the file.";
+                    errorEl.innerText = "Error: " + err.message;
+                    extractedTextOutputEl.innerText = "Error during extraction.";
                     contextText = "";
-                }
-            })
-            .catch((err) => {
-                statusEl.innerText = "❌ Upload failed.";
-                errorEl.innerText = "Error: " + err.message;
-                extractedTextOutputEl.innerText = "Error during extraction.";
-                contextText = "";
-                console.error("Upload error:", err);
-            });
+                    uploadedFileDisplayEl.style.display = 'none'; // Hide file display on error
+                    uploadedFileNameEl.textContent = '';
+                    console.error("Upload error:", err);
+                });
         }
 
         function askQuestion() {
@@ -367,64 +613,108 @@
             }
 
             appendMessage(question, 'user');
-            questionInputEl.value = ""; // Clear input field
+            questionInputEl.value = "";
             hideInitialPlaceholder();
 
-            const thinkingMessageEl = appendMessage("⏳ Thinking...", 'ai thinking'); 
+            const aiMessageEl = appendMessage("", 'ai streaming');
+            let fullResponse = "";
+            let renderTimer = null;
 
-            fetch("/chat/", { // Make sure this endpoint exists on your server
+            fetch("/stream/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     question: question,
-                    context: contextText // Send extracted text as context
-                }),
-            })
-            .then(async (res) => {
-                 if (!res.ok) {
-                    const errData = await res.json().catch(() => ({ error: `Server error: ${res.status}` }));
-                    throw new Error(errData.error || `Server error: ${res.status}`);
+                    context: contextText
+                })
+            }).then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+
+                function scheduleRender() {
+                    if (renderTimer) return;
+                    renderTimer = setTimeout(() => {
+                        renderTimer = null;
+
+                        // Safe markdown render with DOMPurify
+                        try {
+                            aiMessageEl.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
+                        } catch (e) {
+                            aiMessageEl.textContent = fullResponse; // fallback to plain text if error
+                        }
+
+                        conversationAreaEl.scrollTop = conversationAreaEl.scrollHeight;
+                    }, 50);   // ~20 FPS smooth rendering
                 }
-                return res.json();
-            })
-            .then((data) => {
-                if (thinkingMessageEl && thinkingMessageEl.parentNode) {
-                    conversationAreaEl.removeChild(thinkingMessageEl); // Remove thinking message
+
+                function readChunk() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            // Final full render
+                            aiMessageEl.innerHTML = DOMPurify.sanitize(marked.parse(fullResponse));
+                            aiMessageEl.classList.remove('streaming');
+                            conversationAreaEl.scrollTop = conversationAreaEl.scrollHeight;
+                            return;
+                        }
+
+                        const chunk = decoder.decode(value, { stream: true });
+
+                        chunk.split('\n').forEach(line => {
+                            if (line.startsWith("data: ")) {
+                                const token = line.replace("data: ", "");
+                                fullResponse += token;
+                                scheduleRender();   // schedule rendering as tokens arrive
+                            }
+                            // Important: If your backend sends pure newlines, you might need to
+                            // append them here directly to fullResponse if not already present
+                            // in tokens, but `marked.breaks: true` handles most cases.
+                            // If the AI model sends full lines, like "Line 1\nLine 2",
+                            // then 'token' should contain the newline.
+                        });
+
+                        return readChunk();
+                    });
                 }
-                if (data.answer) {
-                    appendMessage(data.answer, 'ai');
-                } else if (data.error) {
-                    appendMessage("❌ Error: " + data.error, 'ai error-message'); 
-                } else {
-                    appendMessage("❌ No valid response from AI.", 'ai error-message');
-                }
-            })
-            .catch((err) => {
-                if (thinkingMessageEl && thinkingMessageEl.parentNode) {
-                    conversationAreaEl.removeChild(thinkingMessageEl); // Remove thinking message
-                }
-                appendMessage("❌ Chat Error: " + err.message, 'ai error-message');
-                // errorEl.innerText = "Chat Error: " + err.message; // Optionally show in general status
-                console.error("Ask error:", err);
+
+                return readChunk();
+            }).catch(err => {
+                aiMessageEl.classList.add("error-message");
+                aiMessageEl.textContent = "❌ Chat error: " + err.message;
             });
         }
 
+
         document.getElementById('sendButton').addEventListener('click', askQuestion);
-        questionInputEl.addEventListener('keypress', function(event) {
+        questionInputEl.addEventListener('keypress', function (event) {
             if (event.key === 'Enter' && !event.shiftKey) { // Send on Enter, allow Shift+Enter for new line
-                event.preventDefault(); 
+                event.preventDefault();
                 askQuestion();
             }
         });
 
+        // Event listener for the clear file button
+        clearFileButtonEl.addEventListener('click', function () {
+            contextText = ""; // Clear the extracted text context
+            statusEl.innerText = "No file uploaded yet.";
+            errorEl.innerText = "";
+            extractedTextOutputEl.innerText = "Nothing yet.";
+            extractedTextContainerEl.style.display = 'none'; // Hide the extracted text container
+            uploadedFileDisplayEl.style.display = 'none'; // Hide the file name display
+            uploadedFileNameEl.textContent = ''; // Clear the file name text
+
+            // Optionally, if you want to clear the conversation area as well:
+            // This re-adds the initial placeholder if the conversation was cleared.
+            // conversationAreaEl.innerHTML = '<p class="initial-chat-placeholder">Upload a file or ask a question to start the conversation.</p>';
+            // showInitialPlaceholderIfEmpty();
+        });
+
+
         function appendMessage(text, type) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message-bubble');
-            
+
             let messageClass = '';
-            switch(type) {
+            switch (type) {
                 case 'user':
                     messageClass = 'user-message';
                     break;
@@ -438,20 +728,29 @@
                     messageClass = 'ai-message error-message';
                     break;
                 default:
-                    messageClass = 'ai-message'; // Default to AI style
+                    messageClass = 'ai-message';
             }
             messageDiv.classList.add(...messageClass.split(' '));
-            
-            messageDiv.textContent = text; // Use textContent to prevent XSS
+
+            // Safely render formatted HTML using marked.parse
+            // Applying marked.parse here for user messages too if they contain markdown
+            messageDiv.innerHTML = DOMPurify.sanitize(marked.parse(text));
+
             conversationAreaEl.appendChild(messageDiv);
-            conversationAreaEl.scrollTop = conversationAreaEl.scrollHeight; // Scroll to bottom
-            return messageDiv; 
+            conversationAreaEl.scrollTop = conversationAreaEl.scrollHeight;
+            return messageDiv;
         }
+
 
         // Initialize: Clear error message on load and ensure placeholder visibility
         errorEl.innerText = "";
         showInitialPlaceholderIfEmpty();
+        // Ensure file display is hidden on initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            uploadedFileDisplayEl.style.display = 'none';
+        });
 
     </script>
 </body>
+
 </html>
